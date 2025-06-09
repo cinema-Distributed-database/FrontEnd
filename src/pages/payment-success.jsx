@@ -12,11 +12,11 @@ export default function PaymentSuccess() {
   const navigate = useNavigate();
 
   const [paymentResult, setPaymentResult] = useState({
-    loading: true,
-    error: null,
-    ticketInfo: null,
-    transactionNo: null,
     data: null,
+    loading: true,
+    ticketInfo: null,
+    error: null,
+    transactionNo: null,
   });
 
   useEffect(() => {
@@ -261,5 +261,5 @@ export default function PaymentSuccess() {
     );
   }
 
-  return <div className="text-center p-10">Trạng thái không xác định.</div>;
+  return <div className="text-center p-10">Trạng thái không thể xác định.</div>;
 }

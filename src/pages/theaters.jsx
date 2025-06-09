@@ -1,23 +1,28 @@
 'use client';
-
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
+import { Button } from '../components/ui/button';
+import { fetchTheaters, fetchNearbyTheaters } from '../lib/api';
 import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { MapPin, Film, Navigation, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { fetchTheaters, fetchNearbyTheaters } from '../lib/api';
+
+
+
 
 export default function TheatersPage() {
+  
   const [searchParams] = useSearchParams();
   const [theaters, setTheaters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
 
-  const [currentPage, setCurrentPage] = useState(1);
   const THEATERS_PER_PAGE = 6;
-
-  const lat = searchParams.get('lat');
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  
   const lng = searchParams.get('lng');
+  const lat = searchParams.get('lat');
+  
 
   useEffect(() => {
     const loadTheaters = async () => {
@@ -126,7 +131,7 @@ export default function TheatersPage() {
         <div className="bg-gray-800 p-4 rounded-lg mb-8 text-center">
           <p className="text-lg mb-2">
             <MapPin className="inline mr-2" size={20} />
-            Đang hiển thị rạp gần vị trí hiện tại của bạn
+            Đang hiển thị các rạp chiếu phim gần đây..
           </p>
           <p className="text-sm text-gray-400">
             Vị trí: {lat}, {lng}
@@ -136,7 +141,7 @@ export default function TheatersPage() {
 
       {theaters.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-400 text-lg">Không tìm thấy rạp chiếu phim nào.</p>
+          <p className="text-gray-400 text-lg">Không có rạp nào gần đây.</p>
         </div>
       ) : (
         <>
