@@ -43,16 +43,16 @@ apiClient.interceptors.response.use(
   }
 );
 
-// ===== MOVIE API =====
+//Movie Api
 
 /**
  * Lấy danh sách phim có phân trang và filter theo status.
- * @param {object} params - Các tham số filter (ví dụ: { page: 0, size: 10, status: 'now-showing' })
+ * @param {object} params 
  * @returns {Promise<Array>} Mảng các phim.
  */
 export async function fetchMovies(params = {}) {
   try {
-    // API backend trả về cấu trúc Page<MovieDto> trong trường 'data'
+    // API backend return Page<MovieDto> trong trường 'data'
     // nên interceptor sẽ trả về { content: [], pageable: {}, ... }
     const response = await apiClient.get('/movies', { params });
     return response.content || []; // Trả về mảng phim từ trường 'content'
@@ -65,11 +65,11 @@ export async function fetchMovies(params = {}) {
 /**
  * Lấy thông tin chi tiết một phim.
  * @param {string} id - ID của phim.
- * @returns {Promise<Object|null>} Thông tin chi tiết phim hoặc null nếu lỗi.
+ * @returns {Promise<Object|null>} Movie Detail
  */
 export async function fetchMovie(id) {
   try {
-    // API backend trả về MovieDto trong trường 'data'
+    // API backend return MovieDto trong trường 'data'
     return await apiClient.get(`/movies/${id}`);
   } catch (error) {
     console.error(`Error fetching movie with id ${id}:`, error);
@@ -128,7 +128,7 @@ export async function searchMovies(params = {}) {
  */
 export async function fetchMovieGenres() {
   try {
-    // API này trả về trực tiếp mảng string trong trường 'data'
+    // API return String(type) in 'data'
     return await apiClient.get('/movies/genres');
   } catch (error) {
     console.error('Error fetching movie genres:', error);
@@ -143,7 +143,7 @@ export async function fetchMovieGenres() {
  */
 export async function fetchLatestMovies(limit = 10) {
   try {
-    // API này trả về trực tiếp mảng phim trong trường 'data'
+
     return await apiClient.get('/movies/latest', { params: { limit } });
   } catch (error) {
     console.error('Error fetching latest movies:', error);
@@ -151,7 +151,7 @@ export async function fetchLatestMovies(limit = 10) {
   }
 }
 
-// ===== CINEMA (THEATER) API =====
+//Cinema api
 
 /**
  * Lấy danh sách tất cả rạp đang hoạt động, có phân trang.
@@ -283,7 +283,7 @@ export async function fetchRoom(id) {
   }
 }
 
-// ===== SHOWTIME API =====
+//showtime api(suat chieu)
 
 /**
  * Lấy lịch chiếu có filter (movieId, cinemaId, city, date, status).
@@ -305,8 +305,6 @@ export async function fetchShowtimes(filters = {}) {
     }
 
     if (filters.status) params.append('status', filters.status);
-
-    // API này trả về trực tiếp mảng showtimes trong trường 'data'
     return await apiClient.get('/showtimes', { params });
   } catch (error) {
     console.error('Error fetching showtimes:', error);
@@ -337,8 +335,7 @@ export async function fetchShowtime(id) {
  */
 export async function fetchSeats(showTimeId) {
   try {
-    // `test api.docx` không mô tả rõ response của GET /api/seats/showtime/{showtimeId}
-    // Giữ nguyên logic xử lý ghế từ frontend, giả định backend trả về `seatStatus`
+
     const responseData = await apiClient.get(`/seats/showtime/${showTimeId}`);
 
     const seats = [];
@@ -350,16 +347,16 @@ export async function fetchSeats(showTimeId) {
           id: seatId,
           row: row,
           number: parseInt(number, 10),
-          type: seatData.type || 'standard', // Nên lấy type từ backend nếu có
+          type: seatData.type || 'standard', 
           status:
             seatData.status === 'available'
               ? 'available'
               : seatData.status === 'holding'
-                ? 'reserved' // 'reserved' trong frontend có thể map với 'holding'
+                ? 'reserved' // 'reserved' =  'holding'  in backend
                 : seatData.status === 'booked'
                   ? 'reserved'
-                  : 'unavailable', // 'booked' cũng là 'reserved'
-          price: seatData.price || 90000, // Nên lấy giá từ backend nếu có
+                  : 'unavailable', 
+          price: seatData.price || 90000, 
         });
       });
     }
@@ -379,7 +376,7 @@ export async function fetchSeats(showTimeId) {
  */
 export async function holdSeats(showtimeId, seatIds, customerPhone) {
   try {
-    // API này trả về { success, message, data: null }
+    // API return object: { success, message, data: null }
     console.log(`Holding seats for showtime ${showtimeId}:`, seatIds);
     return await apiClient.post('/seats/hold', {
       showtimeId,
@@ -433,7 +430,7 @@ export async function extendHoldSeats(showtimeId, seatIds) {
   }
 }
 
-// ===== BOOKING API =====
+//booking api (chon ghe)
 
 /**
  * Tạo một lượt đặt vé mới.
@@ -452,9 +449,9 @@ export async function createBooking(data) {
       seats: data.seats,
       ticketTypes: data.ticketTypes || [
         {
-          type: 'Người lớn', // "type" có thể cần map với giá trị backend mong muốn
+          type: 'Người lớn', 
           quantity: data.seats.length,
-          pricePerTicket: 90000, // Cần đảm bảo giá này là chính xác hoặc lấy từ showtime/room
+          pricePerTicket: 90000, 
         },
       ],
       concessions: data.concessions?.map((c) => ({ itemId: c.id, quantity: c.quantity })) || [], // Đảm bảo format itemId
@@ -551,7 +548,7 @@ export async function createVNPayPaymentUrl(bookingId, returnUrl) {
 // VNPay callback và return URL được xử lý bởi backend và redirect của trình duyệt.
 // Frontend thường không gọi trực tiếp các endpoint này.
 
-// ===== CONCESSION (Đồ ăn/Thức uống) API =====
+//Concession api (bap,nuoc)
 
 /**
  * Lấy danh sách đồ ăn thức uống.
@@ -561,7 +558,6 @@ export async function createVNPayPaymentUrl(bookingId, returnUrl) {
 export async function fetchConcessions(category = '') {
   try {
     const params = category ? { category } : {};
-    // API này trả về trực tiếp mảng concessions trong trường 'data'
     return await apiClient.get('/concessions', { params });
   } catch (error) {
     console.error('Error fetching concessions:', error);
@@ -598,7 +594,7 @@ export async function fetchConcession(id) {
   }
 }
 
-// ===== HEALTH CHECK API =====
+//health check api (kiem tra suc khoe he thong -> bau cu node)
 /**
  * Kiểm tra "sức khỏe" của ứng dụng.
  * @returns {Promise<Object>} Trạng thái hệ thống.
@@ -631,7 +627,7 @@ export async function confirmVnPayPayment(params) {
   }
 }
 
-// ===== UTILITY FUNCTIONS =====
+//utils func(tien ich)
 
 /**
  * Format Date object hoặc string sang 'YYYY-MM-DD' cho API.
@@ -644,7 +640,7 @@ export const formatDateForAPI = (date) => {
     if (date instanceof Date) {
       return date.toISOString().split('T')[0];
     }
-    // Nếu là string, thử parse và format, hoặc giả định nó đã đúng format
+
     const parsedDate = new Date(date);
     if (!isNaN(parsedDate.getTime())) {
       return parsedDate.toISOString().split('T')[0];
@@ -668,7 +664,6 @@ export const handleApiError = (error, defaultMessage = 'Đã có lỗi xảy ra.
   let details = null;
 
   if (error.response) {
-    // Request được gửi và server phản hồi với status code không nằm trong range 2xx
     status = error.response.status;
     message = error.response.data?.message || error.response.data?.error?.message || defaultMessage;
     details = error.response.data?.data || error.response.data?.errors || error.response.data;
@@ -686,7 +681,7 @@ export const handleApiError = (error, defaultMessage = 'Đã có lỗi xảy ra.
       message = defaultMessage;
     }
   } else if (error.request) {
-    // Request được gửi nhưng không nhận được response (ví dụ: network error)
+    // Request được gửi nhưng không nhận được response
     message = 'Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối mạng.';
   } else {
     // Lỗi xảy ra khi thiết lập request

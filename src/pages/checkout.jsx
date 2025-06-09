@@ -18,7 +18,7 @@ import {
 } from '../lib/api';
 import { ArrowLeft, Plus, Minus } from 'lucide-react';
 
-// --- Component con để hiển thị một sản phẩm bắp/nước ---
+
 const ConcessionItem = ({ item, quantity, onQuantityChange }) => (
   <div className="bg-[#1a1a2e] p-4 rounded-lg flex flex-col h-full">
     <div className="flex gap-3 mb-3 flex-grow">
@@ -55,7 +55,7 @@ const ConcessionItem = ({ item, quantity, onQuantityChange }) => (
   </div>
 );
 
-// --- Component chính của trang Checkout ---
+
 export default function CheckoutPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -63,7 +63,7 @@ export default function CheckoutPage() {
   const seatsParam = searchParams.get('seats');
   const selectedSeats = seatsParam ? seatsParam.split(',') : [];
 
-  // --- State Management ---
+
   const [viewState, setViewState] = useState({ loading: true, error: null, submitting: false });
   const [data, setData] = useState({
     movie: null,
@@ -77,7 +77,7 @@ export default function CheckoutPage() {
   const [agreements, setAgreements] = useState({ terms: false, policy: false });
   const [timeLeft, setTimeLeft] = useState(300); // FIX: 5 phút = 300 giây
 
-  // --- Data Fetching ---
+
   useEffect(() => {
     if (!showTimeId || selectedSeats.length === 0) {
       navigate('/');
@@ -113,7 +113,7 @@ export default function CheckoutPage() {
     loadData();
   }, [showTimeId, seatsParam, navigate]);
 
-  // --- Countdown Timer ---
+
   useEffect(() => {
     if (viewState.loading || timeLeft <= 0) return;
 
@@ -129,7 +129,7 @@ export default function CheckoutPage() {
     return () => clearTimeout(timer);
   }, [timeLeft, navigate, viewState.loading, viewState.submitting]);
 
-  // --- Helper Functions & Event Handlers ---
+
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;

@@ -1,4 +1,3 @@
-// src/pages/booking.jsx
 
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -114,12 +113,12 @@ export default function BookingPage() {
         err.message || 'Một hoặc nhiều ghế bạn chọn đã có người khác đặt. Vui lòng chọn lại.'
       );
 
-      // Tải lại sơ đồ ghế để cập nhật trạng thái mới nhất
+
       try {
         const freshSeatsData = await fetchSeats(showTimeId);
         setSeats(freshSeatsData || []);
 
-        // ĐÃ BỎ LOGIC TỰ ĐỘNG BỎ CHỌN GHẾ LỖI KHỎI GIAO DIỆN
+
       } catch (fetchError) {
         console.error('Failed to refresh seat map after hold error:', fetchError);
         alert('Đã có lỗi khi cập nhật lại sơ đồ ghế. Vui lòng tải lại trang.');
@@ -227,11 +226,11 @@ export default function BookingPage() {
   };
 
   if (loading) {
-    return <div className="text-center p-10">Đang tải...</div>;
+    return <div className="text-center p-10">Loading ..</div>;
   }
 
   if (!movie || !showtime || !theater) {
-    return <div className="text-center p-10">Không tìm thấy thông tin suất chiếu.</div>;
+    return <div className="text-center p-10">Không tồn tại thông tin suất chiếu.</div>;
   }
 
   return (
@@ -303,7 +302,7 @@ export default function BookingPage() {
                 <div className="flex justify-between items-center font-bold text-xl">
                   <span>Tạm tính:</span>
                   <span className="text-yellow-400">
-                    {getTotalPrice().toLocaleString('vi-VN')} VNĐ
+                    {getTotalPrice().toLocaleString('vi-VN')} VND
                   </span>
                 </div>
                 {bookingError && (
