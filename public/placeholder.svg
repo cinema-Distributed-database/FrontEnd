@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800px" height="600px" viewBox="0 0 800 600" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Cinestar Placeholder</title>
+    <script type="text/javascript">
+        <![CDATA[
+            function getParameterByName(name) {
+                name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+                var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
+                    results = regex.exec(location.search);
+                return results === null ? "" : decodeURIComponent(results[1].replace(/\+/g, " "));
+            }
+
+            window.onload = function() {
+                var width = getParameterByName('width') || 800;
+                var height = getParameterByName('height') || 600;
+                var text = getParameterByName('text') || 'Cinestar';
+                
+                var svg = document.getElementsByTagName('svg')[0];
+                svg.setAttribute('width', width + 'px');
+                svg.setAttribute('height', height + 'px');
+                svg.setAttribute('viewBox', '0 0 ' + width + ' ' + height);
+                
+                var textElement = document.getElementById('placeholder-text');
+                textElement.textContent = text;
+                textElement.setAttribute('x', width / 2);
+                textElement.setAttribute('y', height / 2);
+                
+                var rect = document.getElementById('placeholder-bg');
+                rect.setAttribute('width', width);
+                rect.setAttribute('height', height);
+            };
+        ]]>
+    </script>
+    <rect id="placeholder-bg" width="800" height="600" fill="#0a1426"/>
+    <rect x="10%" y="10%" width="80%" height="80%" fill="#1a2436" rx="8" ry="8"/>
+    <text id="placeholder-text" x="400" y="300" font-family="Arial, sans-serif" font-size="32" text-anchor="middle" fill="#8a5cf6">Cinestar</text>
+    <text x="50%" y="65%" font-family="Arial, sans-serif" font-size="16" text-anchor="middle" fill="#9ca3af">Placeholder Image</text>
+</svg>
