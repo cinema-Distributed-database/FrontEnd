@@ -1,11 +1,10 @@
-// src/pages/payment-success.jsx
-
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { handleApiError, confirmVnPayPayment, fetchBookingByConfirmationCode } from '../lib/api';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../components/ui/card';
 import { Separator } from '../components/ui/separator';
-import { handleApiError, confirmVnPayPayment, fetchBookingByConfirmationCode } from '../lib/api';
+
 
 export default function PaymentSuccess() {
   const [searchParams] = useSearchParams();
@@ -152,7 +151,7 @@ export default function PaymentSuccess() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold">Thanh toán thành công!</h1>
-            <p className="text-gray-400 mt-2">Cảm ơn bạn đã đặt vé tại Cinestar</p>
+            <p className="text-gray-400 mt-2">Cảm ơn bạn đã đặt vé</p>
           </div>
           <Card className="bg-gray-900 border-gray-800">
             <CardHeader className="text-center border-b border-gray-800 pb-4 text-white">

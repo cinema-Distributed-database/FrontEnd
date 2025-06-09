@@ -1,8 +1,8 @@
 'use client';
-
+import { ChevronLeft, ChevronRight, Ticket } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Ticket } from 'lucide-react';
+
 import { Button } from '../components/ui/button';
 import {
   Select,
@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../components/ui/select';
+
 import MovieCard from '../components/movie-card';
 import {
   fetchMovies,
@@ -26,13 +27,13 @@ export default function HomePage() {
   const [comingSoonMovies, setComingSoonMovies] = useState([]);
   const [allMoviesForFilter, setAllMoviesForFilter] = useState([]);
   const [theaters, setTheaters] = useState([]);
+  const [selectedDate, setSelectedDate] = useState('');
   const [showtimesForFilter, setShowtimesForFilter] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedTime, setSelectedTime] = useState('');
   const [selectedTheater, setSelectedTheater] = useState('');
   const [selectedMovie, setSelectedMovie] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
   const navigate = useNavigate();
 
   const [nowShowingPage, setNowShowingPage] = useState(0);
@@ -52,14 +53,14 @@ export default function HomePage() {
       id: 2,
       image:
         'https://res.cloudinary.com/dgygvrrjs/image/upload/v1749139763/Screenshot_2025-06-05_222822_gj7tdt.png',
-      alt: 'Banner phim mới mỗi tuần',
+      alt: 'Banner phim mới hằng tuần',
       link: '/movies',
     },
     {
       id: 3,
       image:
         'https://res.cloudinary.com/dgygvrrjs/image/upload/v1749139341/Screenshot_2025-06-05_222429_xbq5tb.png',
-      alt: 'Banner combo bắp nước',
+      alt: 'Banner combo các loại bắp nước snacks, ăn vặt',
       link: '/concessions',
     },
   ];
@@ -107,7 +108,7 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    // Reset lựa chọn suất chiếu khi các lựa chọn cha thay đổi
+    // Reset suat chieu
     setSelectedTime('');
     setShowtimesForFilter([]);
 
@@ -160,7 +161,7 @@ export default function HomePage() {
       // `selectedTime` giờ đã là ID của suất chiếu, chỉ cần điều hướng
       navigate(`/booking?showtime=${selectedTime}`);
     } else {
-      alert('Vui lòng chọn đầy đủ thông tin.');
+      alert('Vui lòng chọn đầy đủ các thông tin.');
     }
   };
 
@@ -170,7 +171,7 @@ export default function HomePage() {
 
     return showtimesForFilter
       .map((st) => ({
-        // Lưu ID của suất chiếu vào value để dễ dàng sử dụng khi đặt vé
+        // store IDshowtime
         value: st.id,
         label: new Date(st.showDateTime).toLocaleTimeString('vi-VN', {
           hour: '2-digit',
@@ -291,7 +292,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* === KHU VỰC ĐẶT VÉ NHANH - ĐÃ CẬP NHẬT GIAO DIỆN VÀ LOGIC === */}
+      {/* ĐẶT VÉ NHANH */}
       <div className="container mx-auto my-10 px-4 relative z-20">
         <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-4 shadow-lg flex flex-col md:flex-row items-center gap-4">
           <h2 className="text-xl font-bold uppercase text-white tracking-wider whitespace-nowrap pr-4">
@@ -299,7 +300,7 @@ export default function HomePage() {
           </h2>
 
           <div className="flex-grow w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {/* 1. Chọn Rạp */}
+            {/* Chọn Rạp */}
             <Select value={selectedTheater} onValueChange={setSelectedTheater}>
               <SelectTrigger className="w-full bg-white text-purple-900 font-semibold border-purple-300">
                 <SelectValue placeholder={selectedTheater ? theaters.find(t => t.id === selectedTheater)?.name : '1. Chọn Rạp'} />
@@ -313,7 +314,7 @@ export default function HomePage() {
               </SelectContent>
             </Select>
 
-            {/* 2. Chọn Phim */}
+            {/* Chọn Phim */}
             <Select value={selectedMovie} onValueChange={setSelectedMovie}>
               <SelectTrigger className="w-full bg-white text-purple-900 font-semibold border-purple-300">
                 <SelectValue placeholder={selectedMovie ? allMoviesForFilter.find(m => m.id === selectedMovie)?.title : '2. Chọn Phim'} />
@@ -327,7 +328,7 @@ export default function HomePage() {
               </SelectContent>
             </Select>
 
-            {/* 3. Chọn Ngày */}
+            {/* Chọn Ngày */}
             <Select value={selectedDate} onValueChange={setSelectedDate}>
               <SelectTrigger className="w-full bg-white text-purple-900 font-semibold border-purple-300">
                 <SelectValue placeholder={selectedDate ? getDateOptions().find(d => d.value === selectedDate)?.label : '3. Chọn Ngày'} />
@@ -341,7 +342,7 @@ export default function HomePage() {
               </SelectContent>
             </Select>
 
-            {/* 4. Chọn Suất */}
+            {/* Chọn Suất */}
             <Select
               value={selectedTime}
               onValueChange={setSelectedTime}
