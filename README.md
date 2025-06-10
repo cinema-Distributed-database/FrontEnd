@@ -1,70 +1,119 @@
-# Getting Started with Create React App
+# Cinestar Cinemas - Ứng dụng Đặt vé Xem phim
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Đây là dự án frontend cho một hệ thống đặt vé xem phim trực tuyến, được xây dựng bằng React.js. Ứng dụng cho phép người dùng duyệt phim, xem thông tin chi tiết, tìm rạp, chọn suất chiếu và hoàn tất quá trình đặt vé một cách tiện lợi.
 
-## Available Scripts
+## Tính năng chính
 
-In the project directory, you can run:
+  * **Trang chủ:** Hiển thị danh sách các phim đang chiếu và sắp chiếu, cùng với banner quảng cáo và chức năng đặt vé nhanh.
+  * **Tìm kiếm phim:** Cho phép người dùng tìm kiếm phim theo tên.
+  * **Chi tiết phim:** Hiển thị đầy đủ thông tin về một bộ phim, bao gồm poster, mô tả, trailer, thể loại, thời lượng, và lịch chiếu tại các rạp.
+  * **Hệ thống rạp:**
+      * Liệt kê danh sách các rạp chiếu phim trong hệ thống.
+      * Hỗ trợ tìm kiếm các rạp chiếu phim gần vị trí người dùng qua định vị GPS.
+  * **Đặt vé (Booking Flow):**
+      * Giao diện chọn ghế ngồi trực quan, hiển thị các loại ghế và trạng thái (còn trống, đang chọn, đã đặt).
+      * Trang thanh toán cho phép người dùng nhập thông tin, chọn thêm bắp/nước và xem lại tóm tắt đơn hàng.
+      * Đếm ngược thời gian giữ ghế để đảm bảo tính công bằng.
+  * **Thanh toán:** Tích hợp với cổng thanh toán VNPay để xử lý giao dịch. Trang thông báo kết quả thanh toán thành công hoặc thất bại.
 
-### `npm start`
+## Công nghệ sử dụng
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+  * **Frontend:**
+      * **Framework:** React.js
+      * **Routing:** React Router
+      * **Styling:** Tailwind CSS
+      * **Icons:** Lucide React
+      * **API Client:** Axios
+  * **Backend (suy ra từ file cấu hình):**
+      * Java & Spring Boot
+      * MongoDB
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Yêu cầu cài đặt
 
-### `npm test`
+Trước khi bắt đầu, hãy đảm bảo bạn đã cài đặt các phần mềm sau trên máy:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+  * [Node.js](https://nodejs.org/) (phiên bản 14.x trở lên)
+  * npm (thường đi kèm với Node.js)
+  * Git (tùy chọn, để clone repository)
+  * **Backend Server:** Một instance của server backend phải đang chạy để frontend có thể gọi API.
 
-### `npm run build`
+## Hướng dẫn Cài đặt và Khởi chạy
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+1.  **Clone Repository**
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+    ```bash
+    git clone <URL_REPOSITORY_CUA_BAN>
+    cd <TEN_THU_MUC_REPO>/frontend
+    ```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+2.  **Cài đặt Dependencies**
 
-### `npm run eject`
+    Chạy lệnh sau để cài đặt tất cả các thư viện cần thiết được định nghĩa trong file `package.json`:
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+    ```bash
+    npm install
+    ```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+3.  **Cấu hình API Endpoint**
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+    Ứng dụng frontend cần biết địa chỉ của backend server để gửi request. Mở file `src/lib/api.js` và đảm bảo biến `API_BASE_URL` trỏ đúng đến địa chỉ backend của bạn.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+    ```javascript
+    // src/lib/api.js
+    const API_BASE_URL = 'http://localhost:8080/api'; // Mặc định là localhost:8080
+    ```
 
-## Learn More
+4.  **Chạy ứng dụng ở chế độ Development**
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+    Sử dụng lệnh sau để khởi động server development.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+    ```bash
+    npm start
+    ```
 
-### Code Splitting
+    Lệnh này sẽ chạy ứng dụng và tự động mở trình duyệt tại địa chỉ [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000). Trang sẽ tự động tải lại mỗi khi bạn thực hiện thay đổi trong mã nguồn.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+## Cấu trúc thư mục
 
-### Analyzing the Bundle Size
+Dưới đây là cấu trúc các thư mục quan trọng trong dự án:
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+```
+/public
+  - index.html      # Template HTML chính
+/src
+  /components/      # Chứa các component tái sử dụng (Header, Footer, MovieCard,...)
+    /ui/            # Các component UI cơ bản (Button, Card,...)
+  /lib/             # Chứa logic cốt lõi
+    - api.js        # Các hàm gọi API đến backend
+    - utils.js      # Các hàm tiện ích
+  /pages/           # Chứa các component tương ứng với mỗi trang
+    - home.jsx
+    - movie-detail.jsx
+    - booking.jsx
+    - checkout.jsx
+    - ...
+  - app.jsx         # Component gốc, định tuyến các trang
+  - index.css       # Các file CSS global
+  - index.js        # Điểm bắt đầu của ứng dụng React
+package.json        # Chứa thông tin và các script của dự án
+```
 
-### Making a Progressive Web App
+## Các Scripts có sẵn
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Dự án này được khởi tạo bằng Create React App, bạn có thể sử dụng các script sau:
 
-### Advanced Configuration
+  * ### `npm start`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+    Chạy ứng dụng ở chế độ development.
 
-### Deployment
+  * ### `npm test`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+    Chạy trình test runner ở chế độ interactive watch.
 
-### `npm run build` fails to minify
+  * ### `npm run build`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+    Build ứng dụng cho môi trường production vào thư mục `build`. Quá trình này sẽ tối ưu hóa code để đạt hiệu năng tốt nhất.
+
+  * ### `npm run eject`
+
+    **Lưu ý: đây là thao tác một chiều.** Nếu bạn không hài lòng với các công cụ build mặc định, bạn có thể sử dụng lệnh này để "bung" toàn bộ cấu hình ra và tùy chỉnh sâu hơn.
