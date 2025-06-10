@@ -1,44 +1,32 @@
 import axios from 'axios';
 
-// Cấu hình base URL của API backend
+// url backend api
 const API_BASE_URL = 'http://localhost:8080/api';
 
-// Tạo một axios instance với cấu hình mặc định
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // Thời gian chờ tối đa cho mỗi request (10 giây)
+  timeout: 10000, // 10s
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
 });
 
-// Interceptor để xử lý response một cách nhất quán
-// Backend của bạn trả về dữ liệu trong một wrapper object có dạng:
-// { success: boolean, message: string, data: any, timestamp: string }
-// Interceptor này sẽ trích xuất phần `data` nếu request thành công.
+
 apiClient.interceptors.response.use(
   (response) => {
-    // Nếu response.data có trường 'data', trả về nó.
-    // Điều này phù hợp với hầu hết các API được mô tả trong test api.docx.
-    // Đối với các API trả về dữ liệu trực tiếp (không có wrapper 'data'),
-    // ví dụ như một số API trả về Page<T>, chúng ta sẽ xử lý cụ thể trong từng hàm.
+
     if (response.data && typeof response.data.data !== 'undefined') {
       return response.data.data;
     }
-    // Nếu không có trường 'data' nhưng có 'success' và 'message',
-    // và không phải là lỗi, thì trả về response.data nguyên gốc
-    // để các hàm cụ thể có thể xử lý (ví dụ: các hàm trả về Page<T>)
+
     if (response.data && response.data.success) {
-      return response.data; // Trả về toàn bộ object { success, message, data, timestamp }
+      return response.data; // Trả về object { success, message, data, timestamp }
     }
     return response.data; // Fallback, trả về response data gốc
   },
   (error) => {
-    // Xử lý lỗi API tập trung
     console.error('API Error Interceptor:', error.response || error.request || error.message);
-    // Ném lỗi để các component gọi API có thể bắt và xử lý
-    // (ví dụ: hiển thị thông báo lỗi cho người dùng)
     return Promise.reject(error);
   }
 );
@@ -69,7 +57,6 @@ export async function fetchMovies(params = {}) {
  */
 export async function fetchMovie(id) {
   try {
-    // API backend return MovieDto trong trường 'data'
     return await apiClient.get(`/movies/${id}`);
   } catch (error) {
     console.error(`Error fetching movie with id ${id}:`, error);
@@ -183,15 +170,14 @@ export async function fetchTheater(id) {
 }
 
 /**
- * Tìm rạp gần một tọa độ cho trước.
- * @param {number} latitude - Vĩ độ.
- * @param {number} longitude - Kinh độ.
- * @param {number} radius - Bán kính tìm kiếm (km).
+ * Tìm rạp gần một tọa độ hiện tại.
+ * @param {number} latitude - Vĩ.
+ * @param {number} longitude - Kinh.
+ * @param {number} radius - 
  * @returns {Promise<Array>} Mảng các rạp gần đó.
  */
 export async function fetchNearbyTheaters(latitude, longitude, radius = 1000.0) {
   try {
-    // API này trả về trực tiếp mảng rạp trong trường 'data'
     return await apiClient.get('/cinemas/nearby', {
       params: { lat: latitude, lng: longitude, radius },
     });
@@ -208,7 +194,6 @@ export async function fetchNearbyTheaters(latitude, longitude, radius = 1000.0) 
  */
 export async function fetchCinemaRooms(cinemaId) {
   try {
-    // API này trả về trực tiếp mảng phòng trong trường 'data'
     return await apiClient.get(`/cinemas/${cinemaId}/rooms`);
   } catch (error) {
     console.error(`Error fetching rooms for cinema ${cinemaId}:`, error);
@@ -218,7 +203,7 @@ export async function fetchCinemaRooms(cinemaId) {
 
 /**
  * Lấy rạp theo thành phố.
- * @param {string} city - Tên thành phố.
+ * @param {string} city
  * @param {object} params - Các tham số phân trang.
  * @returns {Promise<Array>} Mảng các rạp trong thành phố.
  */
@@ -267,7 +252,7 @@ export async function fetchCitiesWithTheaters() {
   }
 }
 
-// ===== ROOM API =====
+//room api
 
 /**
  * Lấy thông tin chi tiết phòng chiếu.
@@ -297,7 +282,7 @@ export async function fetchShowtimes(filters = {}) {
     if (filters.cinemaId) params.append('cinemaId', filters.cinemaId);
     if (filters.city) params.append('city', filters.city);
 
-    // Sử dụng date cho cả startDate và endDate để phù hợp với API mới
+
     if (filters.date) {
       const formattedDate = formatDateForAPI(filters.date);
       params.append('startDate', formattedDate);
@@ -326,7 +311,7 @@ export async function fetchShowtime(id) {
   }
 }
 
-// ===== SEAT API =====
+//seat api
 
 /**
  * Lấy trạng thái ghế của một suất chiếu.
@@ -400,7 +385,6 @@ export async function releaseSeats(showtimeId, seatIds) {
     // API này trả về { success, message, data: null }
     return await apiClient.delete('/seats/release', {
       data: {
-        // DELETE request với body cần `data` property
         showtimeId,
         seatIds,
       },
@@ -430,7 +414,7 @@ export async function extendHoldSeats(showtimeId, seatIds) {
   }
 }
 
-//booking api (chon ghe)
+//booking api
 
 /**
  * Tạo một lượt đặt vé mới.
@@ -481,8 +465,8 @@ export async function fetchBookingByConfirmationCode(confirmationCode) {
 /**
  * Xác nhận thanh toán cho một booking (ví dụ sau khi VNPay callback).
  * @param {string} bookingId - ID của booking.
- * @param {string} paymentStatus - Trạng thái thanh toán (ví dụ: "COMPLETED", "FAILED").
- * @param {string} paymentMethod - Phương thức thanh toán (ví dụ: "VNPAY").
+ * @param {string} paymentStatus - Trạng thái thanh toán (COMPLETED, FAILED).
+ * @param {string} paymentMethod 
  * @returns {Promise<Object>} Thông tin booking đã cập nhật.
  */
 export async function confirmBookingPayment(
@@ -492,20 +476,6 @@ export async function confirmBookingPayment(
   transactionId
 ) {
   try {
-    // API backend có thể là PUT /api/bookings/{id}/confirm hoặc một endpoint khác
-    // Dựa theo `test api.docx`, có vẻ là: PUT /api/bookings/{id}/confirm
-    // nhưng không rõ tham số truyền vào. Giả định truyền status và method trong body.
-    // Hoặc, logic này có thể nằm hoàn toàn trong backend sau callback từ VNPay.
-    // Frontend có thể không cần gọi API này trực tiếp nếu callback của VNPay xử lý.
-    // Tạm thời comment out nếu frontend không trực tiếp gọi.
-    // Nếu cần, phải làm rõ endpoint và payload với backend.
-
-    // Ví dụ nếu có endpoint PATCH /api/bookings/{id}/payment-status
-    // return await apiClient.patch(`/bookings/${bookingId}/payment-status`, {
-    //   paymentStatus,
-    //   paymentMethod,
-    //   transactionId // Nếu có
-    // });
     console.warn(
       'confirmBookingPayment: Frontend may not need to call this directly if VNPay callback handles it.'
     );
@@ -520,7 +490,7 @@ export async function confirmBookingPayment(
   }
 }
 
-// ===== PAYMENT API (VNPay) =====
+//payment api
 
 /**
  * Tạo URL thanh toán VNPay.
@@ -531,12 +501,9 @@ export async function confirmBookingPayment(
 export async function createVNPayPaymentUrl(bookingId, returnUrl) {
   try {
     // API này trả về { success, message, data: { paymentUrl, paymentId } }
-    // Interceptor sẽ trích xuất data: { paymentUrl, paymentId }
+
     return await apiClient.post('/payments/vnpay/create', {
       bookingId,
-      // `test api.docx` không đề cập returnUrl trong request body,
-      // nhưng frontend đang gửi. Backend có thể đọc nó từ body hoặc có giá trị mặc định.
-      // Nếu backend không đọc từ body, có thể bỏ `returnUrl` ở đây.
       returnUrl: returnUrl || `${window.location.origin}/payment-success`,
     });
   } catch (error) {
