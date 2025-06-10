@@ -41,13 +41,14 @@ export default function CinemaMoviesPage() {
       try {
         const [cinemaDetails, nowShowingRes, comingSoonRes] = await Promise.all([
           fetchTheater(cinemaId),
-          fetchNowShowingMovies({ cinemaId, size: 20 }),
-          fetchComingSoonMovies({ cinemaId, size: 20 }),
+          fetchNowShowingMovies({ cinemaId, size: 100 }),
+          fetchComingSoonMovies({ cinemaId, size: 50 }),
         ]);
 
         setCinemaInfo(cinemaDetails);
-        setNowShowingMovies(nowShowingRes || []);
-        setComingSoonMovies(comingSoonRes || []);
+        // SỬA LỖI: Chỉ lấy mảng phim từ thuộc tính 'content'
+        setNowShowingMovies(nowShowingRes.content || []);
+        setComingSoonMovies(comingSoonRes.content || []);
       } catch (apiError) {
         console.error('Lỗi khi tải dữ liệu phim của rạp:', apiError);
         const err = handleApiError(apiError);
