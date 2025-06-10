@@ -6,30 +6,29 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { MapPin, Film, Navigation, ChevronLeft, ChevronRight } from 'lucide-react';
 
-
-
-
 export default function TheatersPage() {
-  
   const [searchParams] = useSearchParams();
   const [theaters, setTheaters] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
 
+  // --- THAY ĐỔI STATE ---
   const THEATERS_PER_PAGE = 6;
   const [currentPage, setCurrentPage] = useState(1);
-  
-  
+  const [totalPages, setTotalPages] = useState(0); // State mới để lưu tổng số trang từ API
+
   const lng = searchParams.get('lng');
   const lat = searchParams.get('lat');
-  
 
+  // --- THAY ĐỔI LOGIC TẢI DỮ LIỆU ---
   useEffect(() => {
     const loadTheaters = async () => {
       setLoading(true);
       try {
         if (lat && lng) {
+          // Logic tìm rạp gần đây không thay đổi và không cần phân trang
           setUserLocation({ lat: parseFloat(lat), lng: parseFloat(lng) });
+          setTotalPages(0); // Reset phân trang khi tìm rạp gần đây
           const nearbyTheaters = await fetchNearbyTheaters(parseFloat(lat), parseFloat(lng), 200);
           const theatersWithDistance = nearbyTheaters.map((theater) => {
             if (theater.location && theater.location.coordinates) {
@@ -41,19 +40,26 @@ export default function TheatersPage() {
           });
           setTheaters(theatersWithDistance);
         } else {
-          const allTheaters = await fetchTheaters();
-          setTheaters(allTheaters || []);
+          // Logic lấy tất cả rạp được thay bằng phân trang phía server
+          setUserLocation(null);
+          const page = currentPage - 1; // API Spring Boot dùng page 0-indexed
+          const size = THEATERS_PER_PAGE;
+          const theatersData = await fetchTheaters({ page, size });
+
+          setTheaters(theatersData.content || []);
+          setTotalPages(theatersData.totalPages || 0);
         }
       } catch (error) {
         console.error('Error loading theaters:', error);
         setTheaters([]);
+        setTotalPages(0);
       } finally {
         setLoading(false);
       }
     };
 
     loadTheaters();
-  }, [lat, lng]);
+  }, [lat, lng, currentPage]); // Thêm currentPage vào dependency array
 
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371;
@@ -71,11 +77,7 @@ export default function TheatersPage() {
     return deg * (Math.PI / 180);
   };
 
-  const totalPages = Math.ceil(theaters.length / THEATERS_PER_PAGE);
-  const indexOfLastTheater = currentPage * THEATERS_PER_PAGE;
-  const indexOfFirstTheater = indexOfLastTheater - THEATERS_PER_PAGE;
-  const currentTheaters = theaters.slice(indexOfFirstTheater, indexOfLastTheater);
-
+  // --- THAY ĐỔI LOGIC PHÂN TRANG ---
   const handlePrevPage = () => {
     setCurrentPage((prev) => Math.max(prev - 1, 1));
   };
@@ -83,6 +85,11 @@ export default function TheatersPage() {
   const handleNextPage = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
+
+  // Không cần `slice` dữ liệu ở đây nữa
+  // const indexOfLastTheater = currentPage * THEATERS_PER_PAGE;
+  // const indexOfFirstTheater = indexOfLastTheater - THEATERS_PER_PAGE;
+  // const currentTheaters = theaters.slice(indexOfFirstTheater, indexOfLastTheater);
 
   if (loading) {
     return (
@@ -98,6 +105,7 @@ export default function TheatersPage() {
   return (
     <div className="container mx-auto py-3 px-4">
       <div className="flex justify-between items-center mb-4">
+        {/* Vẫn sử dụng `totalPages` để quyết định hiển thị nút */}
         <Button
           onClick={handlePrevPage}
           disabled={currentPage === 1}
@@ -112,7 +120,7 @@ export default function TheatersPage() {
 
         <Button
           onClick={handleNextPage}
-          disabled={currentPage === totalPages}
+          disabled={currentPage === totalPages || totalPages === 0}
           variant="ghost"
           size="icon"
           className={totalPages > 1 ? 'visible text-white' : 'invisible'}
@@ -141,12 +149,15 @@ export default function TheatersPage() {
 
       {theaters.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-gray-400 text-lg">Không có rạp nào gần đây.</p>
+          <p className="text-gray-400 text-lg">
+            {userLocation ? 'Không có rạp nào gần đây.' : 'Không có rạp chiếu phim nào.'}
+          </p>
         </div>
       ) : (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {currentTheaters.map((theater) => (
+            {/* Render trực tiếp `theaters` state, không cần `currentTheaters` */}
+            {theaters.map((theater) => (
               <Card
                 key={theater.id}
                 className="bg-gray-900 border-gray-800 overflow-hidden flex flex-col"

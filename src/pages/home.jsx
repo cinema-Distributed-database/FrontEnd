@@ -1,6 +1,6 @@
 'use client';
 import { ChevronLeft, ChevronRight, Ticket } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { Button } from '../components/ui/button';
@@ -36,10 +36,18 @@ export default function HomePage() {
   const [selectedMovie, setSelectedMovie] = useState('');
   const navigate = useNavigate();
 
-  const [nowShowingPage, setNowShowingPage] = useState(0);
-  const [comingSoonPage, setComingSoonPage] = useState(0);
+  const MOVIES_PER_PAGE_CLIENT = 4; // Số phim hiển thị trên UI mỗi trang
+  const MOVIES_PER_PAGE_SERVER = 150; // Số phim tải về từ server mỗi lần gọi
 
-  const MOVIES_PER_PAGE = 4;
+  const [nowShowingClientPage, setNowShowingClientPage] = useState(0);
+  const nowShowingBackendPage = useRef(0);
+  const [nowShowingTotalPages, setNowShowingTotalPages] = useState(0);
+
+  const [comingSoonClientPage, setComingSoonClientPage] = useState(0);
+  const comingSoonBackendPage = useRef(0);
+  const [comingSoonTotalPages, setComingSoonTotalPages] = useState(0);
+  
+  const [isFetchingMore, setIsFetchingMore] = useState(false);
 
   const banners = [
     {
@@ -71,28 +79,27 @@ export default function HomePage() {
         setLoading(true);
         setError(null);
 
-        const [nowShowingRes, comingSoonRes, theatersRes, allMoviesRes] = await Promise.all([
-          fetchNowShowingMovies({ page: 0, size: 20 }),
-          fetchComingSoonMovies({ page: 0, size: 20 }),
+        const [nowShowingRes, comingSoonRes, theatersPage, allMoviesRes] = await Promise.all([
+          fetchNowShowingMovies({ page: 0, size: MOVIES_PER_PAGE_SERVER }),
+          fetchComingSoonMovies({ page: 0, size: MOVIES_PER_PAGE_SERVER }),
           fetchTheaters({ page: 0, size: 100 }),
           fetchMovies({ page: 0, size: 100 }),
         ]);
 
-        console.log('Now Showing Movies:', nowShowingRes);
-        console.log('Coming Soon Movies:', comingSoonRes);
-        console.log('Theaters:', theatersRes);
-        console.log('All Movies for Filter:', allMoviesRes);
+        setNowShowingMovies(nowShowingRes.content || []);
+        setNowShowingTotalPages(nowShowingRes.totalPages || 0);
 
-        setNowShowingMovies(nowShowingRes || []);
-        setComingSoonMovies(comingSoonRes || []);
-        setTheaters(theatersRes || []);
-        setAllMoviesForFilter(allMoviesRes || []);
+        setComingSoonMovies(comingSoonRes.content || []);
+        setComingSoonTotalPages(comingSoonRes.totalPages || 0);
+
+        setTheaters(theatersPage.content || []);
+        setAllMoviesForFilter(allMoviesRes.content || []);
 
         const today = new Date().toISOString().split('T')[0];
         setSelectedDate(today);
       } catch (apiError) {
         console.error('Error loading initial data:', apiError);
-        setError(apiError.message || 'Không thể tải dữ liệu trang chủ. Vui lòng thử lại.');
+        setError('Không thể tải dữ liệu trang chủ. Vui lòng thử lại.');
       } finally {
         setLoading(false);
       }
@@ -100,10 +107,7 @@ export default function HomePage() {
 
     loadInitialData();
 
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % banners.length);
-    }, 5000);
-
+    const interval = setInterval(() => setCurrentSlide((prev) => (prev + 1) % banners.length), 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -130,23 +134,76 @@ export default function HomePage() {
     }
   }, [selectedMovie, selectedTheater, selectedDate]);
 
-  const totalNowShowingPages = Math.ceil(nowShowingMovies.length / MOVIES_PER_PAGE);
-  const handleNextNowShowing = () => setNowShowingPage((prev) => (prev + 1) % totalNowShowingPages);
-  const handlePrevNowShowing = () =>
-    setNowShowingPage((prev) => (prev - 1 + totalNowShowingPages) % totalNowShowingPages);
+  const handleNextNowShowing = async () => {
+    const newClientPage = nowShowingClientPage + 1;
+    const totalClientPages = Math.ceil(nowShowingMovies.length / MOVIES_PER_PAGE_CLIENT);
+    
+    if (newClientPage >= totalClientPages) return; // Đã ở trang cuối của dữ liệu hiện có
+
+    setNowShowingClientPage(newClientPage);
+
+    // Kiểm tra xem có cần tải thêm dữ liệu không
+    const moviesNeeded = (newClientPage + 1) * MOVIES_PER_PAGE_CLIENT;
+    const hasEnoughData = moviesNeeded <= nowShowingMovies.length;
+    const hasMoreOnServer = nowShowingBackendPage.current < nowShowingTotalPages - 1;
+
+    if (!hasEnoughData && hasMoreOnServer && !isFetchingMore) {
+      setIsFetchingMore(true);
+      try {
+        nowShowingBackendPage.current += 1;
+        const moreMovies = await fetchNowShowingMovies({ page: nowShowingBackendPage.current, size: MOVIES_PER_PAGE_SERVER });
+        setNowShowingMovies(prev => [...prev, ...(moreMovies.content || [])]);
+      } catch (error) {
+        console.error('Error fetching more now showing movies:', error);
+      } finally {
+        setIsFetchingMore(false);
+      }
+    }
+  };
+
+  const handlePrevNowShowing = () => setNowShowingClientPage((prev) => Math.max(prev - 1, 0));
+
+  const handleNextComingSoon = async () => {
+    const newClientPage = comingSoonClientPage + 1;
+    const totalClientPages = Math.ceil(comingSoonMovies.length / MOVIES_PER_PAGE_CLIENT);
+
+    if (newClientPage >= totalClientPages) return;
+
+    setComingSoonClientPage(newClientPage);
+
+    const moviesNeeded = (newClientPage + 1) * MOVIES_PER_PAGE_CLIENT;
+    const hasEnoughData = moviesNeeded <= comingSoonMovies.length;
+    const hasMoreOnServer = comingSoonBackendPage.current < comingSoonTotalPages - 1;
+
+    if (!hasEnoughData && hasMoreOnServer && !isFetchingMore) {
+      setIsFetchingMore(true);
+      try {
+        comingSoonBackendPage.current += 1;
+        const moreMovies = await fetchComingSoonMovies({ page: comingSoonBackendPage.current, size: MOVIES_PER_PAGE_SERVER });
+        setComingSoonMovies(prev => [...prev, ...(moreMovies.content || [])]);
+      } catch (error) {
+        console.error('Error fetching more coming soon movies:', error);
+      } finally {
+        setIsFetchingMore(false);
+      }
+    }
+  };
+  
+  const handlePrevComingSoon = () => setComingSoonClientPage((prev) => Math.max(prev - 1, 0));
+
   const currentNowShowingMovies = nowShowingMovies.slice(
-    nowShowingPage * MOVIES_PER_PAGE,
-    (nowShowingPage + 1) * MOVIES_PER_PAGE
+    nowShowingClientPage * MOVIES_PER_PAGE_CLIENT,
+    (nowShowingClientPage + 1) * MOVIES_PER_PAGE_CLIENT
   );
 
-  const totalComingSoonPages = Math.ceil(comingSoonMovies.length / MOVIES_PER_PAGE);
-  const handleNextComingSoon = () => setComingSoonPage((prev) => (prev + 1) % totalComingSoonPages);
-  const handlePrevComingSoon = () =>
-    setComingSoonPage((prev) => (prev - 1 + totalComingSoonPages) % totalComingSoonPages);
   const currentComingSoonMovies = comingSoonMovies.slice(
-    comingSoonPage * MOVIES_PER_PAGE,
-    (comingSoonPage + 1) * MOVIES_PER_PAGE
+    comingSoonClientPage * MOVIES_PER_PAGE_CLIENT,
+    (comingSoonClientPage + 1) * MOVIES_PER_PAGE_CLIENT
   );
+
+  // Calculate total client pages for pagination dots
+  const totalNowShowingClientPages = Math.ceil(nowShowingMovies.length / MOVIES_PER_PAGE_CLIENT);
+  const totalComingSoonClientPages = Math.ceil(comingSoonMovies.length / MOVIES_PER_PAGE_CLIENT);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % banners.length);
@@ -376,7 +433,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* === PHẦN PHIM ĐANG CHIẾU - ĐÃ CẬP NHẬT BỐ CỤC NÚT === */}
+      {/* === PHẦN PHIM ĐANG CHIẾU === */}
       <div className="container mx-auto my-12 px-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl md:text-3xl font-semibold text-white">Phim Đang Chiếu</h2>
@@ -385,12 +442,13 @@ export default function HomePage() {
         {nowShowingMovies.length > 0 ? (
           <div className="relative">
             {/* Nút lùi */}
-            {totalNowShowingPages > 1 && (
+            {totalNowShowingClientPages > 1 && (
               <Button
                 variant="outline"
                 size="icon"
                 onClick={handlePrevNowShowing}
-                className="absolute top-1/2 -translate-y-1/2 -left-4 z-10 h-10 w-10 rounded-full bg-black/40 hover:bg-black/70 border-gray-600 hidden lg:flex"
+                disabled={nowShowingClientPage === 0}
+                className="absolute top-1/2 -translate-y-1/2 -left-4 z-10 h-10 w-10 rounded-full bg-black/40 hover:bg-black/70 border-gray-600 hidden lg:flex disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
@@ -403,25 +461,26 @@ export default function HomePage() {
             </div>
 
             {/* Nút tiến */}
-            {totalNowShowingPages > 1 && (
+            {totalNowShowingClientPages > 1 && (
               <Button
                 variant="outline"
                 size="icon"
                 onClick={handleNextNowShowing}
-                className="absolute top-1/2 -translate-y-1/2 -right-4 z-10 h-10 w-10 rounded-full bg-black/40 hover:bg-black/70 border-gray-600 hidden lg:flex"
+                disabled={nowShowingClientPage >= totalNowShowingClientPages - 1}
+                className="absolute top-1/2 -translate-y-1/2 -right-4 z-10 h-10 w-10 rounded-full bg-black/40 hover:bg-black/70 border-gray-600 hidden lg:flex disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronRight className="h-5 w-5" />
               </Button>
             )}
 
             {/* Dấu chấm phân trang */}
-            {totalNowShowingPages > 1 && (
+            {totalNowShowingClientPages > 1 && (
               <div className="flex justify-center gap-2 mt-6">
-                {Array.from({ length: totalNowShowingPages }, (_, i) => (
+                {Array.from({ length: totalNowShowingClientPages }, (_, i) => (
                   <button
                     key={i}
-                    onClick={() => setNowShowingPage(i)}
-                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${nowShowingPage === i ? 'bg-yellow-500 scale-125' : 'bg-white/60 hover:bg-white/90'}`}
+                    onClick={() => setNowShowingClientPage(i)}
+                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${nowShowingClientPage === i ? 'bg-yellow-500 scale-125' : 'bg-white/60 hover:bg-white/90'}`}
                   />
                 ))}
               </div>
@@ -432,7 +491,7 @@ export default function HomePage() {
         )}
       </div>
 
-      {/* === PHẦN PHIM SẮP CHIẾU - ĐÃ CẬP NHẬT BỐ CỤC NÚT === */}
+      {/* === PHẦN PHIM SẮP CHIẾU === */}
       <div className="container mx-auto my-12 px-4">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-2xl md:text-3xl font-semibold text-white">Phim Sắp Chiếu</h2>
@@ -441,12 +500,13 @@ export default function HomePage() {
         {comingSoonMovies.length > 0 ? (
           <div className="relative">
             {/* Nút lùi */}
-            {totalComingSoonPages > 1 && (
+            {totalComingSoonClientPages > 1 && (
               <Button
                 variant="outline"
                 size="icon"
                 onClick={handlePrevComingSoon}
-                className="absolute top-1/2 -translate-y-1/2 -left-4 z-10 h-10 w-10 rounded-full bg-black/40 hover:bg-black/70 border-gray-600 hidden lg:flex"
+                disabled={comingSoonClientPage === 0}
+                className="absolute top-1/2 -translate-y-1/2 -left-4 z-10 h-10 w-10 rounded-full bg-black/40 hover:bg-black/70 border-gray-600 hidden lg:flex disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
@@ -459,25 +519,26 @@ export default function HomePage() {
             </div>
 
             {/* Nút tiến */}
-            {totalComingSoonPages > 1 && (
+            {totalComingSoonClientPages > 1 && (
               <Button
                 variant="outline"
                 size="icon"
                 onClick={handleNextComingSoon}
-                className="absolute top-1/2 -translate-y-1/2 -right-4 z-10 h-10 w-10 rounded-full bg-black/40 hover:bg-black/70 border-gray-600 hidden lg:flex"
+                disabled={comingSoonClientPage >= totalComingSoonClientPages - 1}
+                className="absolute top-1/2 -translate-y-1/2 -right-4 z-10 h-10 w-10 rounded-full bg-black/40 hover:bg-black/70 border-gray-600 hidden lg:flex disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ChevronRight className="h-5 w-5" />
               </Button>
             )}
 
             {/* Dấu chấm phân trang */}
-            {totalComingSoonPages > 1 && (
+            {totalComingSoonClientPages > 1 && (
               <div className="flex justify-center gap-2 mt-6">
-                {Array.from({ length: totalComingSoonPages }, (_, i) => (
+                {Array.from({ length: totalComingSoonClientPages }, (_, i) => (
                   <button
                     key={i}
-                    onClick={() => setComingSoonPage(i)}
-                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${comingSoonPage === i ? 'bg-purple-500 scale-125' : 'bg-white/60 hover:bg-white/90'}`}
+                    onClick={() => setComingSoonClientPage(i)}
+                    className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${comingSoonClientPage === i ? 'bg-purple-500 scale-125' : 'bg-white/60 hover:bg-white/90'}`}
                   />
                 ))}
               </div>

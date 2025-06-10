@@ -72,7 +72,7 @@ export async function fetchMovie(id) {
 export async function fetchNowShowingMovies(params = {}) {
   try {
     const response = await apiClient.get('/movies/now-showing', { params });
-    return response.content || [];
+    return response || { content: [], totalPages: 0 }; // Trả về toàn bộ object
   } catch (error) {
     console.error('Error fetching now showing movies:', error);
     throw handleApiError(error, 'Không thể tải danh sách phim đang chiếu.');
@@ -87,7 +87,7 @@ export async function fetchNowShowingMovies(params = {}) {
 export async function fetchComingSoonMovies(params = {}) {
   try {
     const response = await apiClient.get('/movies/coming-soon', { params });
-    return response.content || [];
+    return response || { content: [], totalPages: 0 }; // Trả về toàn bộ object
   } catch (error) {
     console.error('Error fetching coming soon movies:', error);
     throw handleApiError(error, 'Không thể tải danh sách phim sắp chiếu.');
@@ -147,8 +147,10 @@ export async function fetchLatestMovies(limit = 10) {
  */
 export async function fetchTheaters(params = {}) {
   try {
+    // API backend return Page<CinemaDto> nên interceptor sẽ trả về object này
     const response = await apiClient.get('/cinemas', { params });
-    return response.content || [];
+    // Trả về toàn bộ object response để component có thể lấy totalPages
+    return response || { content: [], totalPages: 0 };
   } catch (error) {
     console.error('Error fetching theaters:', error);
     throw handleApiError(error, 'Không thể tải danh sách rạp.');
